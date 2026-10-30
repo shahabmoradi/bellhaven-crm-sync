@@ -1,18 +1,4 @@
-# Proposal queue — status=pending — 39 proposals
-
-### [ambiguous] bellhaven-at-union-square  (proposal 14d680c6)
-  WEBSITE: Bellhaven at Union Square | 118 Union Square Dr, New Albany, OH 43054 | care ['Assisted Living']
-  CANDIDATE: None (#) | None, None, None None | parent none | None | rev None ar None | care None score 55.0
-  REASON: No address anchor and no clear winner; reviewer must decide.
-  OP PATCH account ...RLLJ9P: {"status": "Needs Review", "note_append": "[2026-10-30] Ambiguous match for website location 'Bellhaven at Union Square': candidates #001GNU41AVXZRLLJ9P (score 55.0). Needs human review."}
-
-### [chow_split] bellhaven-of-marietta  (proposal 2bf13e2a)
-  WEBSITE: Bellhaven of Marietta | 805 Colegate Dr, Marietta, OH 45750 | care ['Short-Term Rehabilitation & Nursing']
-  CRM: Bellhaven of Marietta (#CRBLFT) | 805 Colegate Drive, Marietta, OH 45750 | parent 6S7604 | Active | rev 51250 ar 3800 | care ['Skilled Nursing']
-  SCORE: 95.0 {'street': 40, 'zip': 15, 'city_state': 10, 'name': 30.0} tier=confident
-  NOTE: CHOW split: revenue $51,250 > 0 AND AR $3,800 > 0, so the old account is preserved untouched except chow_current_account.
-  OP CREATE: Bellhaven of Marietta | 805 Colegate Dr, Marietta, OH 45750 | parent ...VYEEEM | care ['Short-Term Rehabilitation & Nursing']
-  OP PATCH account ...CRBLFT: {"chow_current_account": "$created_id"}
+# Proposal queue — status=pending — 36 proposals
 
 ### [chow_split] bellhaven-of-tiffin  (proposal 8d5e55d8)
   WEBSITE: Bellhaven of Tiffin | 45 St Lawrence Dr, Tiffin, OH 44883 | care ['Short-Term Rehabilitation & Nursing']
@@ -106,13 +92,6 @@
   SCORE: 95.0 {'street': 40, 'zip': 15, 'city_state': 10, 'name': 30.0} tier=confident
   NOTE: Orphan account assigned the Bellhaven parent directly.
   OP PATCH account ...YCZ4YM: {"parent_id": "0015QAPLGS3FVYEEEM", "note_append": "[2026-10-30] Assigned Bellhaven parent (account was an orphan; assignment, not a move)."}
-
-### [fix] bellhaven-of-ashtabula  (proposal 0ba9ddc4)
-  WEBSITE: Bellhaven of Ashtabula | 3156 W Prospect Rd, Ashtabula, OH 44004 | care ['Short-Term Rehabilitation & Nursing']
-  CRM: Bellhaven of Ashtabula (#EPSLSV) | PO Box 517, Ashtabula, OH 44004 | parent VYEEEM | Active | rev 0 ar 0 | care ['Skilled Nursing']
-  SCORE: 60.0 {'zip': 15, 'city_state': 10, 'name': 30.0, 'phone': 5} tier=needs_fix
-  DIFF: [["street_address", "PO Box 517", "3156 W Prospect Rd"]]
-  OP PATCH account ...EPSLSV: {"street_address": "3156 W Prospect Rd", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven of Ashtabula'."}
 
 ### [fix] bellhaven-of-chagrin-falls  (proposal 58e54921)
   WEBSITE: Bellhaven of Chagrin Falls | 150 River St, Chagrin Falls, OH 44022 | care ['Assisted Living']

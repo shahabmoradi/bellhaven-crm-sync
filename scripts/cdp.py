@@ -41,6 +41,12 @@ class Tab:
 def open_tab(url):
     req = urllib.request.Request(f"{DEBUG}/json/new?{url}", method="PUT")
     info = json.load(urllib.request.urlopen(req))
+    # Make the new tab the visible one (the recording films the screen,
+    # not the CDP session).
+    try:
+        urllib.request.urlopen(f"{DEBUG}/json/activate/{info['id']}")
+    except Exception:
+        pass
     tab = Tab(info["webSocketDebuggerUrl"])
     tab.call("Page.enable")
     tab.call("Runtime.enable")
@@ -48,26 +54,27 @@ def open_tab(url):
     return tab
 
 
-def card_js(subject, action):
-    """JS that scrolls the proposal card for `subject` into view and,
-    for action='approve'/'reject', clicks the button (reject fills the
-    reason first). Returns a status string."""
+def card_js(subject, action, status="pending"):
+    """JS that scrolls the proposal card for `subject` with the given
+    status label into view and, for action='approve'/'reject', clicks
+    the button (reject fills the reason first). The status match is
+    essential: a subject can also appear on superseded/decided cards,
+    and the first text match is not necessarily the live one."""
+    finder = f"""
+          const cards = [...document.querySelectorAll('.card')];
+          const c = cards.find(x => x.textContent.includes({json.dumps(subject)})
+                                 && x.textContent.includes('[{status}]'));
+          if (!c) return 'not found';"""
     if action == "show":
         return f"""
-        (() => {{
-          const cards = [...document.querySelectorAll('.card')];
-          const c = cards.find(x => x.textContent.includes({json.dumps(subject)}));
-          if (!c) return 'not found';
+        (() => {{{finder}
           c.scrollIntoView({{block: 'center'}});
           c.style.outline = '3px solid #e80';
           return 'shown';
         }})()"""
     if action == "approve":
         return f"""
-        (() => {{
-          const cards = [...document.querySelectorAll('.card')];
-          const c = cards.find(x => x.textContent.includes({json.dumps(subject)}));
-          if (!c) return 'not found';
+        (() => {{{finder}
           c.scrollIntoView({{block: 'center'}});
           const b = c.querySelector("form[action*='approve'] button");
           if (!b) return 'no approve button';
@@ -76,10 +83,7 @@ def card_js(subject, action):
         }})()"""
     if action == "reject":
         return f"""
-        (() => {{
-          const cards = [...document.querySelectorAll('.card')];
-          const c = cards.find(x => x.textContent.includes({json.dumps(subject)}));
-          if (!c) return 'not found';
+        (() => {{{finder}
           c.scrollIntoView({{block: 'center'}});
           const input = c.querySelector("form[action*='reject'] input[name='reason']");
           const b = c.querySelector("form[action*='reject'] button");
@@ -91,6 +95,5 @@ def card_js(subject, action):
     raise ValueError(action)
 
 
-REJECT_REASON = ("Cannot confirm this is the same facility: the website address "
-                 "(118 Union Square Dr) does not match the account's address "
-                 "(240 Market St). Not matched; left for human follow-up.")
+REJECT_REASON = ("Different street address (240 Market St vs 118 Union Square Dr); "
+                 "cannot prove same facility.")
