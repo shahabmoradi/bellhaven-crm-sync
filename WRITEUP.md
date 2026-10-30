@@ -1,19 +1,27 @@
 # Writeup — Bellhaven CRM sync
 
-**Matching approach.** The website is the source of truth. All 34
-listed communities were scraped, then matched against *all* 121 CRM
-accounts (not just Bellhaven's children — several Bellhaven facilities
-sit under other operators). Matching blocks on zip, city+state, and
+**Matching approach.** The website is the source of truth. All 35
+communities were scraped — the directory lists 34, but the home page
+links a 35th (Bellhaven Meadows of Findlay, announced as "new this
+year") that never appears in the directory; a listing-only crawl
+misses it, so discovery also scans the home and About pages. The 35
+were then matched against *all* 121 CRM accounts (not just
+Bellhaven's children — several Bellhaven facilities sit under other
+operators). Matching blocks on zip, city+state, and
 house number, then scores: street-address anchor 40 (25 for a partial
 anchor), zip 15, city+state 10, name similarity up to 30, phone +5.
 Two hard vetoes: different state, or different house number *and*
 different zip. Address is the primary key because names lie — three
 facilities still carry pre-acquisition names (e.g. "Cedar Trail of
 Zanesville"), and one exact-name account (Amberly Manor) is a decoy
-in Colorado that the state veto correctly rejects. Results: 23 fixes,
-5 duplicate clusters, 2 CHOW splits, 3 creates, 4 inactivations, and
+in Colorado that the state veto correctly rejects. Results: 24 fixes,
+5 duplicate clusters, 2 CHOW splits, 3 creates, 3 inactivations, and
 1 genuinely ambiguous case (Union Square — same name/city, completely
 different street) which is flagged Needs Review rather than guessed.
+One proposal from the first (34-location) run — inactivate Findlay —
+was caught as wrong once the 35th page was found, and was rejected in
+review with the reason recorded; its replacement simply assigns the
+parentless Findlay account to the Bellhaven parent.
 
 **Rules that shaped the output.** Duplicates resolve before any
 parent change; losers get `duplicate_of_account` + Inactive (no merge

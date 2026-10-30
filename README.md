@@ -1,7 +1,9 @@
 # Bellhaven CRM Sync
 
 Keeps a sandbox CRM in sync with the Bellhaven Senior Living website
-(34 communities). The website is the source of truth. The pipeline
+(35 communities — the directory lists 34; a 35th, Findlay, is linked
+only from the home page, so the scraper discovers detail links beyond
+the directory too). The website is the source of truth. The pipeline
 scrapes every listed location, matches it against all CRM accounts,
 and turns the differences into **reviewable proposals**. Nothing is
 written to the CRM until a human approves a proposal in the local

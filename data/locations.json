@@ -105,6 +105,22 @@
     "source_url": "https://analyst-assessment-production.up.railway.app/communities/bellhaven-healthcare-centre-of-ashland"
   },
   {
+    "name": "Bellhaven Meadows of Findlay",
+    "slug": "bellhaven-meadows-of-findlay",
+    "street_address": "1800 N Blanchard St",
+    "city": "Findlay",
+    "state": "OH",
+    "zip": "45840",
+    "address_raw": "1800 N Blanchard St | Findlay, OH 45840",
+    "care_offerings": [
+      "Assisted Living",
+      "Memory Support"
+    ],
+    "administrator": "Sam Pruitt",
+    "phone": "(231) 533-2969",
+    "source_url": "https://analyst-assessment-production.up.railway.app/communities/bellhaven-meadows-of-findlay"
+  },
+  {
     "name": "Bellhaven of Ashtabula",
     "slug": "bellhaven-of-ashtabula",
     "street_address": "3156 W Prospect Rd",

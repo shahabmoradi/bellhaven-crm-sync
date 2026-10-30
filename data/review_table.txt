@@ -1,4 +1,4 @@
-# Proposal queue — status=pending — 38 proposals
+# Proposal queue — status=pending — 39 proposals
 
 ### [ambiguous] bellhaven-at-union-square  (proposal 14d680c6)
   WEBSITE: Bellhaven at Union Square | 118 Union Square Dr, New Albany, OH 43054 | care ['Assisted Living']
@@ -99,6 +99,13 @@
   SCORE: 91.1 {'street': 40, 'zip': 15, 'city_state': 10, 'name': 26.1} tier=confident
   DIFF: [["name", "Bellhaven Health Care Center of Ashland", "Bellhaven Healthcare Centre of Ashland"]]
   OP PATCH account ...ZN5HX5: {"name": "Bellhaven Healthcare Centre of Ashland", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven Healthcare Centre of Ashland'."}
+
+### [fix] bellhaven-meadows-of-findlay  (proposal f02e6fdc)
+  WEBSITE: Bellhaven Meadows of Findlay | 1800 N Blanchard St, Findlay, OH 45840 | care ['Assisted Living', 'Memory Support']
+  CRM: Bellhaven Meadows of Findlay (#YCZ4YM) | 1800 N Blanchard St, Findlay, OH 45840 | parent none | Active | rev 22000 ar 0 | care ['Assisted Living']
+  SCORE: 95.0 {'street': 40, 'zip': 15, 'city_state': 10, 'name': 30.0} tier=confident
+  NOTE: Orphan account assigned the Bellhaven parent directly.
+  OP PATCH account ...YCZ4YM: {"parent_id": "0015QAPLGS3FVYEEEM", "note_append": "[2026-10-30] Assigned Bellhaven parent (account was an orphan; assignment, not a move)."}
 
 ### [fix] bellhaven-of-ashtabula  (proposal 0ba9ddc4)
   WEBSITE: Bellhaven of Ashtabula | 3156 W Prospect Rd, Ashtabula, OH 44004 | care ['Short-Term Rehabilitation & Nursing']

@@ -4,6 +4,10 @@
 Source: https://analyst-assessment-production.up.railway.app
   - Listing: /communities?page=N  ("Page X of Y · N communities listed")
   - Detail:  /communities/<slug>  (name, address, care offerings, admin, phone)
+  - Discovery ALSO scans the home and About pages for detail links: the
+    directory lists 34 communities, but the home page links a 35th
+    (Bellhaven Meadows of Findlay, announced as "new this year") that
+    never appears in the directory. A listing-only crawl misses it.
 
 Stdlib only (urllib + html.parser) so it reruns anywhere.
 Writes:
@@ -178,6 +182,19 @@ def main() -> int:
             if link not in detail_paths:
                 detail_paths.append(link)
         page += 1
+        time.sleep(0.2)
+
+    # 1b) Also harvest detail links from the home and About pages — a
+    # community can be linked there without being in the directory
+    # (Findlay is: the directory says 34, the site links 35).
+    for extra_path, raw_name in (("/", "home.html"), ("/about", "about.html")):
+        html = fetch(BASE + extra_path)
+        (RAW / raw_name).write_text(html, encoding="utf-8")
+        lp = ListingParser()
+        lp.feed(html)
+        for link in lp.links:
+            if link not in detail_paths:
+                detail_paths.append(link)
         time.sleep(0.2)
 
     print(f"Listing: {total_pages} pages, site claims {claimed_count} communities, "
