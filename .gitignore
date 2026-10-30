@@ -1,0 +1,6 @@
+.token
+.env
+.venv/
+data/*.db
+data/write_log.jsonl
+__pycache__/

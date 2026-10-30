@@ -1,0 +1,96 @@
+== ACCOUNTS PULLED: 121
+
+== FIELD INVENTORY (key: non-null %, types, samples)
+  account_id: 121/121 {'str': 121} e.g. ['001UXEM0PCSUVRAYPF', '001DPANQQTRR1LXFY4', '00192CFL38Y0U4Q887']
+  billing_city: 121/121 {'str': 121} e.g. ['Grand Rapids', 'Parma', 'Pittsburgh']
+  billing_state: 121/121 {'str': 121} e.g. ['MI', 'OH', 'PA']
+  billing_street: 121/121 {'str': 121} e.g. ['9320 Cherry Blvd', '9735 Maple St', '2974 Water Dr']
+  billing_zip: 121/121 {'str': 121} e.g. ['49503', '44129', '15213']
+  care_type: 121/121 {'str': 121} e.g. ['Skilled Nursing', 'Assisted Living', 'Memory Care']
+  chow_current_account: 121/121 {'str': 121} e.g. ['', '', '']
+  created_by_candidate: 121/121 {'bool': 121} e.g. ['False', 'False', 'False']
+  duplicate_of_account: 121/121 {'str': 121} e.g. ['', '', '']
+  lifetime_revenue: 121/121 {'int': 121} e.g. ['0', '0', '5000']
+  name: 121/121 {'str': 121} e.g. ['Amberly Care Center', 'Amberly Estates', 'Amberly Gardens']
+  note: 121/121 {'str': 121} e.g. ['', '', '']
+  outstanding_ar: 121/121 {'int': 121} e.g. ['0', '0', '0']
+  parent_id: 121/121 {'str': 121} e.g. ['00139TNDS8HNLUZ5A6', '001DAAUWV2J3SHQJ34', '00139TNDS8HNLUZ5A6']
+  parent_name: 121/121 {'str': 121} e.g. ['Stonebridge Eldercare (Parent Account)', 'Juniper Point Healthcare (Parent Account', 'Stonebridge Eldercare (Parent Account)']
+  phone: 121/121 {'str': 121} e.g. ['(734) 611-4393', '(517) 216-2060', '(517) 384-2716']
+  status: 121/121 {'str': 121} e.g. ['Active', 'Active', 'Active']
+  updated_at: 121/121 {'str': 121} e.g. ['2026-10-30 22:20:33Z', '2026-10-30 22:20:33Z', '2026-10-30 22:20:33Z']
+
+== STATUS VALUES: {'Active': 112, 'Inactive': 9}
+
+== MONEY FIELDS (formats to eyeball)
+  lifetime_revenue: nulls=0 strings=[] negatives=[] tiny=[]
+  outstanding_ar: nulls=0 strings=[] negatives=[] tiny=[]
+
+== PARENT_ID RESOLUTION
+  dangling parent_ids on accounts: none
+  parent 001DAAUWV2J3SHQJ34 (Juniper Point Healthcare (Parent Account)): 30 children
+  parent 0015QAPLGS3FVYEEEM (Bellhaven Senior Living (Parent Account)): 29 children
+  parent 00139TNDS8HNLUZ5A6 (Stonebridge Eldercare (Parent Account)): 25 children
+  parent 001FJZYHR7MLFMNPLL (Harborview Care Group (Parent Account)): 5 children
+  parent 001FWSQ30SFW6S7604 (Cedar Trail Communities (Parent Account)): 5 children
+  parent 001YRHHXQ5HJ0TCL2U (Millstone Health Partners (Parent Account)): 1 children
+  Bellhaven-name variants:
+    #0010KJFP601YNTZVDA Arbors at Bellhaven Dayton parent=0015QAPLGS3FVYEEEM children=0
+    #00116ETS45BL7DTQP7 Bellhaven Care Center of Alliance parent=0015QAPLGS3FVYEEEM children=0
+    #0011D2P3CWSHMF81C8 Bellhaven Court of Altoona parent=0015QAPLGS3FVYEEEM children=0
+    #001LGFPBJY4N9MB6KL Bellhaven Crossings of Lima parent=001FJZYHR7MLFMNPLL children=0
+    #001U1750VLVJAGG1S5 Bellhaven Gardens of Monroe parent=0015QAPLGS3FVYEEEM children=0
+    #001RJ0D7Z5MAZN5HX5 Bellhaven Health Care Center of Ashland parent=0015QAPLGS3FVYEEEM children=0
+    #001UKEFGADQ8YCZ4YM Bellhaven Meadows of Findlay parent=None children=0
+    #001TZCSTBZFM6K5BGN Bellhaven Rehab and Nursing of Grove City parent=0015QAPLGS3FVYEEEM children=0
+    #0015QAPLGS3FVYEEEM Bellhaven Senior Living (Parent Account) parent=None children=29
+    #001CVBBCSDM7YHN220 Bellhaven Shores of Erie parent=0015QAPLGS3FVYEEEM children=0
+    #0019Y4J61ZBG4R00CD Bellhaven Terrace of Akron parent=0015QAPLGS3FVYEEEM children=0
+    #0014DHACE6WQU3RMM5 Bellhaven Woods of Toledo parent=0015QAPLGS3FVYEEEM children=0
+    #001NXP9X46CWEPSLSV Bellhaven of Ashtabula parent=0015QAPLGS3FVYEEEM children=0
+    #0016PVXH4B25HWR7QE Bellhaven of Coldwater parent=0015QAPLGS3FVYEEEM children=0
+    #001R4PXTUD9R6FNN8V Bellhaven of Defiance parent=0015QAPLGS3FVYEEEM children=0
+    #001JQER1RMYKNRLNME Bellhaven of Goshen parent=0015QAPLGS3FVYEEEM children=0
+    #001NSHWKQD0YJLPQ20 Bellhaven of Kalamazoo parent=0015QAPLGS3FVYEEEM children=0
+    #001L3LGR6W69J8DYYV Bellhaven of Maplewood parent=0015QAPLGS3FVYEEEM children=0
+    #001A34WFSUYHCRBLFT Bellhaven of Marietta parent=001FWSQ30SFW6S7604 children=0
+    #0015L38R1Z5947ZZP7 Bellhaven of Marion parent=0015QAPLGS3FVYEEEM children=0
+    #001KC1NG7EZDEKKA3T Bellhaven of Meadville parent=0015QAPLGS3FVYEEEM children=0
+    #001AQGPZ5G5VRES536 Bellhaven of New Carlisle parent=0015QAPLGS3FVYEEEM children=0
+    #001EGU7BMJ942ZTRE6 Bellhaven of Owosso parent=0015QAPLGS3FVYEEEM children=0
+    #001QU150PM4Z15UA71 Bellhaven of Owosso parent=0015QAPLGS3FVYEEEM children=0
+    #001UELXDAKFRKB8932 Bellhaven of Port Clinton parent=0015QAPLGS3FVYEEEM children=0
+    #001CF3LDWVRGL09P4F Bellhaven of Portsmouth parent=0015QAPLGS3FVYEEEM children=0
+    #001MVVAPY6U5TVYRC4 Bellhaven of Saline parent=0015QAPLGS3FVYEEEM children=0
+    #001SXSF4ELF0Z2LGDM Bellhaven of Sandusky parent=0015QAPLGS3FVYEEEM children=0
+    #00191H7JR16471SZ34 Bellhaven of Sycamore Ridge parent=0015QAPLGS3FVYEEEM children=0
+    #001U6RW32TY0WSXZZB Bellhaven of Tiffin parent=001FWSQ30SFW6S7604 children=0
+    #001W5G121A7SMRP58M Bellhaven of Wooster parent=0015QAPLGS3FVYEEEM children=0
+
+== PRE-EXISTING HISTORY (respect it, don't redo it)
+
+== NOTES (read them all — planted hints live here)
+
+== CANONICAL PARENT: 0015QAPLGS3FVYEEEM (parent chosen: the account named 'Bellhaven Senior Living (Parent Account)')
+
+== STATE DISTRIBUTION (CRM): {'MI': 21, 'OH': 53, 'PA': 22, 'CO': 1, 'IN': 18}
+   website: OH 23 / MI 5 / PA 4 / IN 2
+
+== DUPLICATE GROUPS (same normalized street + zip, 2+ accounts)
+  ('750', 'stewart rd', '48162'): accounts ['001U1750VLVJAGG1S5', '0011AB44D05WLA9HTX', '00159PL81N38KM4FHM']
+  ('4930', 'w lake rd', '16505'): accounts ['001CVBBCSDM7YHN220', '001BLYF02K97SZLZHH']
+  ('1120', 'w main st', '48867'): accounts ['001EGU7BMJ942ZTRE6', '001QU150PM4Z15UA71']
+  ('1420', 'harbor point dr', '43452'): accounts ['001UELXDAKFRKB8932', '001JD2MWRA74LTSN24']
+  ('2715', 'columbus ave', '44870'): accounts ['001SXSF4ELF0Z2LGDM', '0017JP8Z1UQ763BVK3']
+  ('3313', 'wilmington pike', '45429'): accounts ['001WR41PYNWXCAE2X4', '0016KTS1UAWBRXS09J']
+
+== ANCHORED PAIRS: phone / administrator agreement (settles the phone weight)
+  phone: 10/26 agree (38%)
+  Amberly Manor matched account / its parent: None
+
+== WRONG-PARENT FINANCIAL TABLE (hand-verify every row)
+  Bellhaven Crossings of Lima: account #001LGFPBJY4N9MB6KL parent=001FJZYHR7MLFMNPLL revenue=$47,000.00 AR=$0.00 -> re-parent directly
+  Bellhaven of Kettering: account #001WR41PYNWXCAE2X4 parent=001FJZYHR7MLFMNPLL revenue=$0.00 AR=$0.00 -> re-parent directly
+  Bellhaven of Marietta: account #001A34WFSUYHCRBLFT parent=001FWSQ30SFW6S7604 revenue=$51,250.00 AR=$3,800.00 -> CHOW SPLIT
+  Bellhaven of Tiffin: account #001U6RW32TY0WSXZZB parent=001FWSQ30SFW6S7604 revenue=$84,000.00 AR=$12,400.00 -> CHOW SPLIT
+  Bellhaven of Zanesville: account #001H1JMVZWP46D5VUF parent=001FWSQ30SFW6S7604 revenue=$0.00 AR=$0.00 -> re-parent directly

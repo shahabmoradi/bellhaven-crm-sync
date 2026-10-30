@@ -1,0 +1,28 @@
+name: bellhaven-daily-sync
+
+# Runs the pipeline daily: scrape the website, snapshot the CRM,
+# generate proposals for anything that changed. READ-ONLY against
+# the CRM — proposals wait in the review app for a human decision.
+# (State note: on a hosted runner the local proposals DB does not
+# persist between runs; production would use a hosted database or
+# commit the DB back to the repo. Applied changes are naturally
+# idempotent because the next run diffs against the corrected CRM.)
+
+on:
+  schedule:
+    - cron: "0 13 * * *"   # ~6 AM Pacific
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python src/scrape.py
+      - run: python src/pipeline.py run
+        env:
+          BELLHAVEN_TOKEN: ${{ secrets.BELLHAVEN_TOKEN }}
