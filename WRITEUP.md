@@ -36,6 +36,15 @@ compared on their USPS-normalized form — "Street" vs "St" and
 corrections (a wrong zip, a PO Box where a real street exists, a
 stale name) are ever proposed. An earlier draft proposed 12
 formatting-only syncs; normalized comparison retired them all.
+After the last approval was applied, a full re-run of the pipeline
+proposed zero changes — all 35 locations classify as confident
+matches — which is the idempotency the daily run depends on. The
+first post-execution re-run did catch one last bug: Kettering's
+already-resolved duplicate losers were re-proposed on their own,
+because their survivor-side changes had already landed and changed
+the proposal's shape; the builder now treats an account already
+stamped as a duplicate of the survivor and Inactive as resolved,
+with a regression test.
 
 **Rules that shaped the output.** Duplicates resolve before any
 parent change; losers get `duplicate_of_account` + Inactive (no merge
@@ -52,9 +61,9 @@ created. The gate also applies to duplicate *losers*: a losing copy
 that sits under another operator with revenue and AR is that
 operator's billing record for the same facility, not a duplicate —
 its only change is `chow_current_account` pointing at the survivor.
-(All seven losers in this dataset are $0/$0, verified twice, so the
-rule changes no outcome here; it is in the code, with a test, so the
-behavior is right by construction.) Judgment calls, stated plainly:
+(All seven losers in this dataset are $0/$0, verified against three
+separate exports, so the rule changes no outcome here; it is in the
+code, with a test, so the behavior is right by construction.) Judgment calls, stated plainly:
 (1) the SOP governs moving *between* parents; null → Bellhaven is
 assignment, not a move, so a parentless Bellhaven account is
 assigned the parent directly — or inactivated if it is not on the
@@ -86,9 +95,14 @@ the three approved demo changes, nothing else), and reproduced
 four real defects the first two reviewers missed — the worst being
 that a re-run would have marked Marietta's preserved account a
 duplicate of its own split. All four were fixed and covered by new
-named tests before the remaining proposals were approved. All CRM
-writes went through approve/reject decisions in the review app;
-nothing was ever written by the pipeline itself.
+named tests before the remaining proposals were approved. The
+remaining queue (25 items) was then reviewed group by group before
+execution; that review added an executor guard that refuses any
+field outside the CRM's real schema, and a sweep that retires a
+stale pending proposal when a newer run re-proposes the same
+account under a different subject. All CRM writes went through
+approve/reject decisions in the review app; nothing was ever
+written by the pipeline itself.
 
 **What I would build next.** A reviewer UI showing a map pin and a
 street-photo thumbnail per proposal (address disputes become

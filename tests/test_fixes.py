@@ -13,6 +13,10 @@
 - executor: create-guard returns the raw record's account_id;
   a direct re-parent is blocked when the CHOW gate has flipped;
   the stale check watches address fields
+- final review: a translated op field outside the CRM schema fails
+  before any write; plain creates carry a creation note; the store
+  retires an older pending proposal that overlaps an account a newer
+  run re-proposed (the stale Findlay inactivation shape)
 
 Run: .venv/bin/python tests/test_fixes.py
 """
@@ -253,5 +257,93 @@ except executor.StaleError:
     pass
 assert writes == [], writes
 print("identity anchor OK: an unchanged-field change still blocks approval")
+
+# --- 9. Executor: unknown wire field fails BEFORE any write ---------
+# The proposals a reviewer sees are canonical; the executor translates
+# them to the CRM's billing_* / care_type schema. A field that does
+# not exist in that schema (here a canonical "zip_code" the WRITE_MAP
+# does not know) must stop the op, not reach the API.
+writes.clear()
+crm.fetch_account = lambda aid: {"id": 8, "name": "Y", "parent_id": 1,
+                                 "status": "Active"}
+bad_prop = {"id": "t9", "kind": "fix", "evidence": {},
+            "ops": [{"type": "patch", "account_id": 8,
+                     "fields": {"zip_code": "99999"}}]}
+try:
+    executor.execute(bad_prop)
+    raise AssertionError("expected StaleError for unknown field")
+except executor.StaleError:
+    pass
+assert writes == [], writes
+bad_create = {"id": "t9b", "kind": "create", "evidence": {},
+              "ops": [{"type": "create",
+                       "fields": {"name": "X", "bogus_field": 1},
+                       "guard": {"house": "1", "street": "main",
+                                 "zip": "00000", "parent_id": 1}}]}
+try:
+    executor.execute(bad_create, dry_run=True)
+    raise AssertionError("expected StaleError for unknown create field")
+except executor.StaleError:
+    pass
+print("unknown-field guard OK: bad wire fields never reach the API")
+
+# --- 10. Store: cross-run overlap retires the older pending ---------
+import tempfile
+import store
+conn = store.connect(str(Path(tempfile.mkdtemp()) / "t.db"))
+old = {"id": "old1", "kind": "inactivate", "subject_key": "account:X",
+       "ops": [{"type": "patch", "account_id": "X", "fields": {"status": "Inactive"}}],
+       "evidence": {}}
+new = {"id": "new1", "kind": "fix", "subject_key": "some-location",
+       "ops": [{"type": "patch", "account_id": "X", "fields": {"parent_id": 1}}],
+       "evidence": {}}
+other = {"id": "oth1", "kind": "fix", "subject_key": "other-location",
+         "ops": [{"type": "patch", "account_id": "Y", "fields": {"name": "Z"}}],
+         "evidence": {}}
+store.insert_new(conn, [old, other], "run-old")
+store.insert_new(conn, [new], "run-new")
+assert store.supersede_overlapping_pending(conn, "run-new") == 1
+states = {p["id"]: p["status"] for p in store.list_proposals(conn)}
+assert states == {"old1": "superseded", "new1": "pending",
+                  "oth1": "pending"}, states
+print("overlap sweep OK: older overlapping pending retired, rest kept")
+
+# --- 11. Plain creates carry a creation note -------------------------
+props, _ = build_proposals([dayton], [PARENT, OTHER], "2026-10-31")
+create_prop = next(p for p in props if p["kind"] == "create")
+note = create_prop["ops"][0]["fields"]["note"]
+assert note.startswith("[2026-10-31] Created from website listing"), note
+print("create note OK: new accounts say where they came from")
+
+# --- 12. Post-execution re-run: resolved duplicates stay resolved ---
+# After the Kettering cluster was approved and applied, the survivor
+# is renamed + parented and both losers are Inactive with
+# duplicate_of_account pointing at it. A re-run must propose NOTHING
+# for the location — it is a confident no-change match. (The first
+# post-execution re-run re-proposed the losers alone, because the
+# survivor-side ops had dropped out of the target.)
+import normalize as _norm
+kettering = by_name["Bellhaven of Kettering"]
+_k_care = [_norm.WEB_TO_CRM_CARE.get(o, o) for o in kettering["care_offerings"][:1]]
+def _k_acct(id_, name, parent, **kw):
+    base = {"id": id_, "name": name, "parent_id": parent, "status": "Active",
+            "street_address": kettering["street_address"],
+            "city": kettering["city"], "state": kettering["state"],
+            "zip": kettering["zip"], "care_offerings": _k_care,
+            "lifetime_revenue": 0, "outstanding_ar": 0}
+    base.update(kw)
+    return base
+post_exec = [
+    PARENT, OTHER,
+    _k_acct(70, "Bellhaven of Kettering", 1),
+    _k_acct(71, "Kettering Care Centre", 99, status="Inactive",
+            duplicate_of_account=70),
+    _k_acct(72, "Kettering Senior Campus", 98, status="Inactive",
+            duplicate_of_account=70),
+]
+props, summary = build_proposals([kettering], post_exec, "2026-10-31")
+assert not props, props
+assert any(c["account_id"] == 70 for c in summary["confident_no_change"])
+print("post-execution re-run OK: resolved duplicate cluster is a no-change match")
 
 print("ALL FIX TESTS PASSED")

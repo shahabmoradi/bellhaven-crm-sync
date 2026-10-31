@@ -333,6 +333,8 @@ def build_proposals(locations, accounts, today, non_matches=None):
                  "zip": loc["zip"], "parent_id": parent_id}
         if tier == "no_account" or best is None:
             fields = _website_fields(loc_raw, parent_id)
+            fields["note"] = (f"[{today}] Created from website listing; "
+                              f"no CRM account existed.")
             ops = [{"type": "create", "fields": fields, "guard": guard}]
             proposals.append({
                 "kind": "create", "subject_key": slug, "ops": ops,
@@ -380,6 +382,16 @@ def build_proposals(locations, accounts, today, non_matches=None):
         # Step 1: duplicates.
         for loser in cluster_raw:
             if loser.get("id") == survivor.get("id"):
+                continue
+            if (str(loser.get("duplicate_of_account") or "") == str(survivor["id"])
+                    and (loser.get("status") or "").lower() == "inactive"):
+                # Already stamped as a duplicate of this survivor by
+                # an earlier approved run — this pair's dedup is done.
+                # Re-proposing it would break idempotent re-runs (it
+                # bit exactly once: Kettering, whose survivor-side ops
+                # had resolved, leaving a losers-only lookalike).
+                notes.append(f"'{loser['name']}' is already marked a duplicate "
+                             f"of the survivor and Inactive; nothing to do.")
                 continue
             if loser.get("chow_current_account"):
                 # Defensive: preserved originals are filtered out of

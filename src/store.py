@@ -64,13 +64,16 @@ def insert_new(conn, proposals, run_id):
             inserted += 1
         else:
             # Same target (same stable id) already queued: refresh the
-            # EVIDENCE of the still-pending row, so its "before"
-            # snapshots carry the newest fields. Decided rows are
-            # never touched — their evidence is the historical record.
+            # EVIDENCE and OPS of the still-pending row, so its
+            # "before" snapshots carry the newest fields and its ops
+            # the newest build (note text is excluded from the stable
+            # id, so a fresher note for the same target is the same
+            # proposal). Decided rows are never touched — their ops
+            # and evidence are the historical record.
             conn.execute(
-                "UPDATE proposals SET evidence = ? "
+                "UPDATE proposals SET evidence = ?, ops = ? "
                 "WHERE id = ? AND status = 'pending'",
-                (json.dumps(p["evidence"]), p["id"]),
+                (json.dumps(p["evidence"]), json.dumps(p["ops"]), p["id"]),
             )
             skipped += 1
     conn.commit()
@@ -119,6 +122,39 @@ def supersede_pending_subjects(conn, subject_keys):
         f"WHERE status = 'pending' AND subject_key IN ({marks})", keys)
     conn.commit()
     return cur.rowcount
+
+
+def supersede_overlapping_pending(conn, keep_run_id):
+    """Cross-run invariant: at most one PENDING proposal may touch a
+    given account. Subject-key superseding cannot see the case where
+    an older proposal's subject is the ACCOUNT and the newer one's is
+    the LOCATION (the stale Findlay inactivation: the run stopped
+    generating it once the facility was found on the website, but its
+    subject never matched the new fix proposal's). Any pending
+    proposal from an older run that touches an account also touched
+    by a pending proposal from the latest run is retired as
+    superseded. Decided rows are never touched. Returns the count."""
+    rows = conn.execute(
+        "SELECT id, run_id, ops FROM proposals WHERE status = 'pending'"
+    ).fetchall()
+    by_account = {}
+    for r in rows:
+        for op in json.loads(r["ops"] or "[]"):
+            aid = op.get("account_id")
+            if aid is not None:
+                by_account.setdefault(str(aid), []).append(r)
+    retired = 0
+    for rs in by_account.values():
+        if len(rs) < 2 or not any(r["run_id"] == keep_run_id for r in rs):
+            continue
+        for r in rs:
+            if r["run_id"] != keep_run_id:
+                cur = conn.execute(
+                    "UPDATE proposals SET status = 'superseded' "
+                    "WHERE id = ? AND status = 'pending'", (r["id"],))
+                retired += cur.rowcount
+    conn.commit()
+    return retired
 
 
 def list_proposals(conn, status=None):

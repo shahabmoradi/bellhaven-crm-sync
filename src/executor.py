@@ -95,6 +95,29 @@ def translate_fields(fields):
     return out
 
 
+# Every writable field in the CRM's real schema (pinned at recon from
+# the snapshot records). After translation, an op may only write
+# these; anything else means a builder bug, and the op must fail
+# BEFORE the write rather than land as a stray field or a silent
+# no-op. (Added at the final review: the reviewer only ever sees the
+# canonical proposal form, so the wire form is guarded here, at the
+# single write path.)
+API_WRITABLE_FIELDS = frozenset({
+    "name", "parent_id", "billing_street", "billing_city",
+    "billing_state", "billing_zip", "care_type", "status", "phone",
+    "note", "duplicate_of_account", "chow_current_account",
+    "lifetime_revenue", "outstanding_ar",
+})
+
+
+def _check_writable(fields, what):
+    unknown = sorted(set(fields) - API_WRITABLE_FIELDS)
+    if unknown:
+        raise StaleError(
+            f"{what}: field(s) {unknown} are not in the CRM schema — "
+            f"refusing to write")
+
+
 class StaleError(Exception):
     pass
 
@@ -227,6 +250,7 @@ def execute(proposal, dry_run=False, save_progress=None):
             continue
         if op["type"] == "create":
             fields = translate_fields(dict(op["fields"]))
+            _check_writable(fields, "create op")
             if dry_run:
                 created_id = created_id if created_id is not None else -1
                 log.append({"op": "create", "fields": fields, "dry_run": True})
@@ -255,6 +279,7 @@ def execute(proposal, dry_run=False, save_progress=None):
                 else:
                     fields[key] = value
             fields = translate_fields(fields)
+            _check_writable(fields, f"patch op on account {aid}")
             if dry_run:
                 log.append({"op": "patch", "account_id": aid, "fields": fields, "dry_run": True})
             else:

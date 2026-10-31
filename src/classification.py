@@ -86,22 +86,40 @@ def main():
             conf = next((c for c in summary["confident_no_change"]
                          if c["location"] == loc["name"]), None)
             acct_id = str(conf["account_id"]) if conf else ""
-            covered_accounts.add(acct_id)
             detail = "matched; no change needed"
             # A location whose account exists because of an applied
             # split is a resolved fix, not an untouched match.
             prior = [d for d in decided.get(slug, []) if d["status"] == "applied"]
             if prior:
                 detail = "resolved: " + "; ".join(d["kind"] for d in prior)
+            # The full account set for this location: the matched
+            # account plus every account an applied proposal touched
+            # (duplicate losers, the preserved CHOW original, ...).
+            ids = [acct_id] if acct_id else []
+            for d in prior:
+                for cid in d["evidence"].get("cluster_account_ids", []):
+                    if str(cid) not in ids:
+                        ids.append(str(cid))
+            covered_accounts.update(ids)
+            # A location that had NO account and got one created is
+            # classified no_crm_account — that was its state when the
+            # decision was made; the decision column shows the create.
+            if any(d["kind"] == "create" for d in prior):
+                category = "no_crm_account"
+            elif prior:
+                category = "match_needing_fix"
+            else:
+                category = "confident_match"
             rows.append({
                 "location_name": loc["name"], "slug": slug,
                 "website_street": loc.get("street_address"),
                 "website_city": loc.get("city"), "website_state": loc.get("state"),
                 "website_zip": loc.get("zip"),
-                "category": "confident_match" if not prior else "match_needing_fix",
+                "category": category,
                 "detail": detail,
-                "crm_account_ids": acct_id,
-                "crm_account_names": by_id.get(acct_id, {}).get("name", ""),
+                "crm_account_ids": ";".join(ids),
+                "crm_account_names": "; ".join(
+                    by_id.get(i, {}).get("name", "") for i in ids),
                 "decision": decision_note(slug),
             })
             continue
@@ -139,6 +157,14 @@ def main():
             "decision": decision_note(slug) or f"{prop['kind']} pending",
         })
 
+    # Accounts already resolved as duplicates of a covered account
+    # belong to that account's location row, not to the
+    # not-on-website section.
+    for acct in accounts:
+        dup = str(acct.get("duplicate_of_account") or "")
+        if dup and dup in covered_accounts:
+            covered_accounts.add(str(acct["id"]))
+
     # Accounts not on the website: Bellhaven-parent children and
     # Bellhaven-named orphans the matcher did not claim, plus every
     # preserved CHOW original (historical, deliberately untouched).
@@ -174,7 +200,7 @@ def main():
                           "orphan) but no website location matches it",
                 "crm_account_ids": aid,
                 "crm_account_names": acct.get("name", ""),
-                "decision": decision_note(subject) or "inactivate pending",
+                "decision": decision_note(subject) or "no decision recorded",
             })
 
     out = ROOT / "classification.csv"

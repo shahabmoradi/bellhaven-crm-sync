@@ -63,6 +63,10 @@ def run(fixture=None):
     if swept:
         print(f"swept {swept} stale pending proposals for locations now "
               f"classified confident (no change needed)")
+    overlap = store.supersede_overlapping_pending(conn, run_id)
+    if overlap:
+        print(f"retired {overlap} stale pending proposal(s) that overlapped "
+              f"an account re-proposed by this run")
     print(f"parent: {summary['parent_id']} ({summary['parent_note']})")
     print(f"locations: {summary['locations']}  proposals: {len(proposals)} "
           f"by kind: {summary['proposal_counts']}")

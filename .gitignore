@@ -5,3 +5,8 @@ data/*.db
 data/write_log.jsonl
 __pycache__/
 data/proposals.db.bak-*
+
+# runtime / working artifacts
+data/app.log
+data/claude_groups.txt
+data/snapshot_2*.json
