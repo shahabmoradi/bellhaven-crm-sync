@@ -38,6 +38,7 @@ export BELLHAVEN_TOKEN=...        # or put it in .token (gitignored)
 .venv/bin/python src/review_table.py      # text dump of the pending queue
 .venv/bin/python tests/test_match.py      # matcher tests
 .venv/bin/python tests/test_proposals.py  # proposal / store / executor tests
+.venv/bin/python tests/test_fixes.py      # regression tests (audit + review fixes)
 ```
 
 Offline mode: `src/pipeline.py run --fixture tests/fixture_accounts.json`
