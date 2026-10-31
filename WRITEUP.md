@@ -112,4 +112,4 @@ keeping humans on money and parent changes; and a weekly digest of
 Needs Review items so ambiguous cases age visibly instead of
 silently.
 
-**Time spent:** TIME_SPENT_TO_FINALIZE
+**Time spent:** about 4 hours
