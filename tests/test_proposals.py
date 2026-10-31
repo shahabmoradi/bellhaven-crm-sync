@@ -68,7 +68,7 @@ assert op_types[0] == "patch" and chow["ops"][0]["fields"]["duplicate_of_account
 assert "create" in op_types and chow["ops"][-1]["fields"]["chow_current_account"] == "$created_id", chow["ops"]
 assert "inactivate" in kinds and kinds["inactivate"][0]["subject_key"] == "account:30"
 creates = [p for p in proposals if p["kind"] == "create"]
-assert len(creates) == 32, f"expected 32 creates (34 locations - amberly - dayton), got {len(creates)}"
+assert len(creates) == 33, f"expected 33 creates (35 locations - amberly - dayton), got {len(creates)}"
 assert all(p["subject_key"] != (amberly.get('slug') or '') for p in proposals if p["kind"] == "create")
 assert len({p["id"] for p in proposals}) == len(proposals), "proposal ids must be unique"
 print("proposal kinds:", {k: len(v) for k, v in kinds.items()})

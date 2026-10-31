@@ -68,6 +68,43 @@ def insert_new(conn, proposals, run_id):
     return inserted, skipped, superseded
 
 
+def confirmed_non_matches(conn):
+    """(subject_key, account_id) pairs a reviewer has CONFIRMED are
+    not the same facility: every candidate named by a REJECTED
+    ambiguous proposal. The proposal builder excludes these pairs
+    from candidacy, so on the next run the location falls through
+    to a create proposal instead of re-proposing the same bad match.
+    Reopening a rejected proposal (reopen.py) un-decides it and so
+    also un-confirms the pair."""
+    rows = conn.execute(
+        "SELECT subject_key, evidence FROM proposals "
+        "WHERE status = 'rejected' AND kind = 'ambiguous'").fetchall()
+    pairs = set()
+    for r in rows:
+        ev = json.loads(r["evidence"]) if r["evidence"] else {}
+        for c in ev.get("candidates", []):
+            if c.get("account_id") is not None:
+                pairs.add((r["subject_key"], str(c["account_id"])))
+    return pairs
+
+
+def supersede_pending_subjects(conn, subject_keys):
+    """Retire PENDING proposals whose subject the latest run resolved
+    with NO proposal at all (e.g. a location now classified confident,
+    no change). Without this sweep, a stale pending proposal built by
+    older logic would linger in the review queue forever. Decided
+    proposals (applied/rejected) are never touched. Returns the count."""
+    keys = list(subject_keys)
+    if not keys:
+        return 0
+    marks = ",".join("?" for _ in keys)
+    cur = conn.execute(
+        f"UPDATE proposals SET status = 'superseded' "
+        f"WHERE status = 'pending' AND subject_key IN ({marks})", keys)
+    conn.commit()
+    return cur.rowcount
+
+
 def list_proposals(conn, status=None):
     if status:
         rows = conn.execute("SELECT * FROM proposals WHERE status = ? ORDER BY kind, subject_key",

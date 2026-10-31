@@ -1,4 +1,4 @@
-# Proposal queue — status=pending — 36 proposals
+# Proposal queue — status=pending — 25 proposals
 
 ### [chow_split] bellhaven-of-tiffin  (proposal 8d5e55d8)
   WEBSITE: Bellhaven of Tiffin | 45 St Lawrence Dr, Tiffin, OH 44883 | care ['Short-Term Rehabilitation & Nursing']
@@ -12,6 +12,11 @@
   WEBSITE: Amberly Manor | 4390 Darrow Rd, Hudson, OH 44236 | care ['Assisted Living']
   REASON: No CRM account matched this website location.
   OP CREATE: Amberly Manor | 4390 Darrow Rd, Hudson, OH 44236 | parent ...VYEEEM | care ['Assisted Living']
+
+### [create] bellhaven-at-union-square  (proposal 6f5b8ec3)
+  WEBSITE: Bellhaven at Union Square | 118 Union Square Dr, New Albany, OH 43054 | care ['Assisted Living']
+  REASON: No CRM account matched this website location.
+  OP CREATE: Bellhaven at Union Square | 118 Union Square Dr, New Albany, OH 43054 | parent ...VYEEEM | care ['Assisted Living']
 
 ### [create] bellhaven-of-batavia  (proposal addbdb0f)
   WEBSITE: Bellhaven of Batavia | 2000 Hospital Dr, Batavia, OH 45103 | care ['Short-Term Rehabilitation & Nursing']
@@ -65,13 +70,6 @@
   DIFF: [["name", "Bellhaven of Sycamore Ridge", "Bellhaven at Sycamore Ridge"]]
   OP PATCH account ...71SZ34: {"name": "Bellhaven at Sycamore Ridge", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven at Sycamore Ridge'."}
 
-### [fix] bellhaven-court-of-altoona  (proposal 7db1ea27)
-  WEBSITE: Bellhaven Court of Altoona | 1125 Logan Blvd, Altoona, PA 16602 | care ['Assisted Living']
-  CRM: Bellhaven Court of Altoona (#MF81C8) | 1125 Logan Boulevard, Altoona, PA 16602 | parent VYEEEM | Active | rev 61000 ar 0 | care ['Assisted Living']
-  SCORE: 100.0 {'street': 40, 'zip': 15, 'city_state': 10, 'name': 30.0, 'phone': 5} tier=confident
-  DIFF: [["street_address", "1125 Logan Boulevard", "1125 Logan Blvd"]]
-  OP PATCH account ...MF81C8: {"street_address": "1125 Logan Blvd", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven Court of Altoona'."}
-
 ### [fix] bellhaven-crossings-of-lima  (proposal d16807e3)
   WEBSITE: Bellhaven Crossings of Lima | 3115 N Cole St, Lima, OH 45801 | care ['Assisted Living']
   CRM: Bellhaven Crossings of Lima (#9MB6KL) | 3115 N Cole St, Lima, OH 45801 | parent FMNPLL | Active | rev 47000 ar 0 | care ['Assisted Living']
@@ -100,61 +98,12 @@
   DIFF: [["name", "Riverbend Manor Care Center", "Bellhaven of Chagrin Falls"]]
   OP PATCH account ...C1Q0G7: {"name": "Bellhaven of Chagrin Falls", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven of Chagrin Falls'."}
 
-### [fix] bellhaven-of-chesterton  (proposal 598e8862)
+### [fix] bellhaven-of-chesterton  (proposal ea3de731)
   WEBSITE: Bellhaven of Chesterton | 1250 NW Franklin Street, Chesterton, IN 46304 | care ['Short-Term Rehabilitation & Nursing']
   CRM: Chesterton Senior Commons (#Z8DXEG) | 1250 Northwest Franklin St, Chesterton, IN 46304 | parent VYEEEM | Active | rev 0 ar 0 | care ['Skilled Nursing']
-  SCORE: 85.0 {'street': 25, 'zip': 15, 'city_state': 10, 'name': 30.0, 'phone': 5} tier=confident
-  DIFF: [["name", "Chesterton Senior Commons", "Bellhaven of Chesterton"], ["street_address", "1250 Northwest Franklin St", "1250 NW Franklin Street"]]
-  OP PATCH account ...Z8DXEG: {"name": "Bellhaven of Chesterton", "street_address": "1250 NW Franklin Street", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven of Chesterton'."}
-
-### [fix] bellhaven-of-defiance  (proposal c3959cb2)
-  WEBSITE: Bellhaven of Defiance | 700 Carpenter Rd, Defiance, OH 43512 | care ['Short-Term Rehabilitation & Nursing']
-  CRM: Bellhaven of Defiance (#6FNN8V) | 700 Carpenter Road, Defiance, OH 43512 | parent VYEEEM | Active | rev 66000 ar 9500 | care ['Skilled Nursing']
-  SCORE: 95.0 {'street': 40, 'zip': 15, 'city_state': 10, 'name': 30.0} tier=confident
-  DIFF: [["street_address", "700 Carpenter Road", "700 Carpenter Rd"]]
-  OP PATCH account ...6FNN8V: {"street_address": "700 Carpenter Rd", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven of Defiance'."}
-
-### [fix] bellhaven-of-goshen  (proposal 03425c2f)
-  WEBSITE: Bellhaven of Goshen | 1610 College Ave, Goshen, IN 46526 | care ['Assisted Living']
-  CRM: Bellhaven of Goshen (#NRLNME) | 1610 College Avenue, Goshen, IN 46526 | parent VYEEEM | Active | rev 121000 ar 0 | care ['Assisted Living']
-  SCORE: 95.0 {'street': 40, 'zip': 15, 'city_state': 10, 'name': 30.0} tier=confident
-  DIFF: [["street_address", "1610 College Avenue", "1610 College Ave"]]
-  OP PATCH account ...NRLNME: {"street_address": "1610 College Ave", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven of Goshen'."}
-
-### [fix] bellhaven-of-kalamazoo  (proposal db9f990a)
-  WEBSITE: Bellhaven of Kalamazoo | 3222 Gull Rd, Kalamazoo, MI 49048 | care ['Short-Term Rehabilitation & Nursing']
-  CRM: Bellhaven of Kalamazoo (#JLPQ20) | 3222 Gull Road, Kalamazoo, MI 49048 | parent VYEEEM | Active | rev 0 ar 0 | care ['Skilled Nursing']
   SCORE: 100.0 {'street': 40, 'zip': 15, 'city_state': 10, 'name': 30.0, 'phone': 5} tier=confident
-  DIFF: [["street_address", "3222 Gull Road", "3222 Gull Rd"]]
-  OP PATCH account ...JLPQ20: {"street_address": "3222 Gull Rd", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven of Kalamazoo'."}
-
-### [fix] bellhaven-of-maplewood  (proposal 442a698a)
-  WEBSITE: Bellhaven of Maplewood | 210 Orchard Lane, Maplewood, OH 44280 | care ['Assisted Living']
-  CRM: Bellhaven of Maplewood (#J8DYYV) | 210 Orchard Ln, Maplewood, OH 44280 | parent VYEEEM | Active | rev 0 ar 0 | care ['Assisted Living']
-  SCORE: 100.0 {'street': 40, 'zip': 15, 'city_state': 10, 'name': 30.0, 'phone': 5} tier=confident
-  DIFF: [["street_address", "210 Orchard Ln", "210 Orchard Lane"]]
-  OP PATCH account ...J8DYYV: {"street_address": "210 Orchard Lane", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven of Maplewood'."}
-
-### [fix] bellhaven-of-marion  (proposal c1a67bbb)
-  WEBSITE: Bellhaven of Marion | 199 Barks Rd W, Marion, OH 43302 | care ['Short-Term Rehabilitation & Nursing']
-  CRM: Bellhaven of Marion (#47ZZP7) | 199 Barks Road West, Marion, OH 43302 | parent VYEEEM | Active | rev 87000 ar 0 | care ['Skilled Nursing']
-  SCORE: 95.0 {'street': 40, 'zip': 15, 'city_state': 10, 'name': 30.0} tier=confident
-  DIFF: [["street_address", "199 Barks Road West", "199 Barks Rd W"]]
-  OP PATCH account ...47ZZP7: {"street_address": "199 Barks Rd W", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven of Marion'."}
-
-### [fix] bellhaven-of-meadville  (proposal 3e17bacf)
-  WEBSITE: Bellhaven of Meadville | 341 Chestnut St, Meadville, PA 16335 | care ['Short-Term Rehabilitation & Nursing']
-  CRM: Bellhaven of Meadville (#EKKA3T) | 341 Chestnut Street, Meadville, PA 16335 | parent VYEEEM | Active | rev 87000 ar 1000 | care ['Skilled Nursing']
-  SCORE: 100.0 {'street': 40, 'zip': 15, 'city_state': 10, 'name': 30.0, 'phone': 5} tier=confident
-  DIFF: [["street_address", "341 Chestnut Street", "341 Chestnut St"]]
-  OP PATCH account ...EKKA3T: {"street_address": "341 Chestnut St", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven of Meadville'."}
-
-### [fix] bellhaven-of-new-carlisle  (proposal 0fc76c12)
-  WEBSITE: Bellhaven of New Carlisle | 875 Elm Street, New Carlisle, OH 45344 | care ['Short-Term Rehabilitation & Nursing']
-  CRM: Bellhaven of New Carlisle (#RES536) | 875 Elm St, New Carlisle, OH 45344 | parent VYEEEM | Active | rev 156000 ar 0 | care ['Skilled Nursing']
-  SCORE: 100.0 {'street': 40, 'zip': 15, 'city_state': 10, 'name': 30.0, 'phone': 5} tier=confident
-  DIFF: [["street_address", "875 Elm St", "875 Elm Street"]]
-  OP PATCH account ...RES536: {"street_address": "875 Elm Street", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven of New Carlisle'."}
+  DIFF: [["name", "Chesterton Senior Commons", "Bellhaven of Chesterton"]]
+  OP PATCH account ...Z8DXEG: {"name": "Bellhaven of Chesterton", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven of Chesterton'."}
 
 ### [fix] bellhaven-of-portsmouth  (proposal 12cc69bd)
   WEBSITE: Bellhaven of Portsmouth | 2222 Gallia St, Portsmouth, OH 45662 | care ['Short-Term Rehabilitation & Nursing']
@@ -163,26 +112,12 @@
   DIFF: [["zip", "45626", "45662"]]
   OP PATCH account ...L09P4F: {"zip": "45662", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven of Portsmouth'."}
 
-### [fix] bellhaven-of-saline  (proposal dbab9661)
-  WEBSITE: Bellhaven of Saline | 980 W Michigan Ave, Saline, MI 48176 | care ['Short-Term Rehabilitation & Nursing']
-  CRM: Bellhaven of Saline (#TVYRC4) | 980 West Michigan Avenue, Saline, MI 48176 | parent VYEEEM | Active | rev 0 ar 0 | care ['Skilled Nursing']
-  SCORE: 100.0 {'street': 40, 'zip': 15, 'city_state': 10, 'name': 30.0, 'phone': 5} tier=confident
-  DIFF: [["street_address", "980 West Michigan Avenue", "980 W Michigan Ave"]]
-  OP PATCH account ...TVYRC4: {"street_address": "980 W Michigan Ave", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven of Saline'."}
-
-### [fix] bellhaven-of-wooster  (proposal ff623c98)
-  WEBSITE: Bellhaven of Wooster | 2301 Cleveland Road, Wooster, OH 44691 | care ['Short-Term Rehabilitation & Nursing']
-  CRM: Bellhaven of Wooster (#MRP58M) | 2301 Cleveland Rd, Wooster, OH 44691 | parent VYEEEM | Active | rev 25000 ar 0 | care ['Skilled Nursing']
-  SCORE: 100.0 {'street': 40, 'zip': 15, 'city_state': 10, 'name': 30.0, 'phone': 5} tier=confident
-  DIFF: [["street_address", "2301 Cleveland Rd", "2301 Cleveland Road"]]
-  OP PATCH account ...MRP58M: {"street_address": "2301 Cleveland Road", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven of Wooster'."}
-
-### [fix] bellhaven-of-zanesville  (proposal aa1ea45b)
+### [fix] bellhaven-of-zanesville  (proposal 99462c62)
   WEBSITE: Bellhaven of Zanesville | 2680 Maple Ave, Zanesville, OH 43701 | care ['Short-Term Rehabilitation & Nursing']
   CRM: Cedar Trail of Zanesville (#6D5VUF) | 2680 Maple Avenue, Zanesville, OH 43701 | parent 6S7604 | Active | rev 0 ar 0 | care ['Skilled Nursing']
   SCORE: 95.0 {'street': 40, 'zip': 15, 'city_state': 10, 'name': 30.0} tier=confident
   NOTE: Direct re-parent: CHOW gate not met (revenue $0, AR $0).
-  DIFF: [["name", "Cedar Trail of Zanesville", "Bellhaven of Zanesville"], ["street_address", "2680 Maple Avenue", "2680 Maple Ave"]]
+  DIFF: [["name", "Cedar Trail of Zanesville", "Bellhaven of Zanesville"]]
   OP PATCH account ...6D5VUF: {"parent_id": "0015QAPLGS3FVYEEEM", "note_append": "[2026-10-30] Re-parented to Bellhaven (revenue $0, AR $0; CHOW gate not met). [2026-10-30] Synced to website listing for 'Bellhaven of Zanesville'.", "name": "Bellhaven
 
 ### [fix] bellhaven-rehabilitation-nursing-of-grove-city  (proposal 1236f0c4)
@@ -192,26 +127,12 @@
   DIFF: [["name", "Bellhaven Rehab and Nursing of Grove City", "Bellhaven Rehabilitation & Nursing of Grove City"]]
   OP PATCH account ...6K5BGN: {"name": "Bellhaven Rehabilitation & Nursing of Grove City", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven Rehabilitation & Nursing of Grove City'."}
 
-### [fix] bellhaven-terrace-of-akron  (proposal 6522b5be)
-  WEBSITE: Bellhaven Terrace of Akron | 55 Ridgewood Avenue, Akron, OH 44313 | care ['Assisted Living']
-  CRM: Bellhaven Terrace of Akron (#4R00CD) | 55 Ridgewood Ave, Akron, OH 44313 | parent VYEEEM | Active | rev 101000 ar 9000 | care ['Assisted Living']
-  SCORE: 100.0 {'street': 40, 'zip': 15, 'city_state': 10, 'name': 30.0, 'phone': 5} tier=confident
-  DIFF: [["street_address", "55 Ridgewood Ave", "55 Ridgewood Avenue"]]
-  OP PATCH account ...4R00CD: {"street_address": "55 Ridgewood Avenue", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven Terrace of Akron'."}
-
-### [fix] bellhaven-willow-creek  (proposal 5b5a5bb7)
+### [fix] bellhaven-willow-creek  (proposal 2f1a32e1)
   WEBSITE: Bellhaven Willow Creek | 8060 Willow Creek Ln, Portage, MI 49024 | care ['Memory Support']
   CRM: Sunny Acres Retirement Home (#DS8WQZ) | 8060 Willow Creek Lane, Portage, MI 49024 | parent VYEEEM | Active | rev 0 ar 0 | care ['Memory Care']
   SCORE: 74.2 {'street': 40, 'zip': 15, 'city_state': 10, 'name': 9.2} tier=needs_fix
-  DIFF: [["name", "Sunny Acres Retirement Home", "Bellhaven Willow Creek"], ["street_address", "8060 Willow Creek Lane", "8060 Willow Creek Ln"]]
-  OP PATCH account ...DS8WQZ: {"name": "Bellhaven Willow Creek", "street_address": "8060 Willow Creek Ln", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven Willow Creek'."}
-
-### [fix] bellhaven-woods-of-toledo  (proposal 4caf8dbc)
-  WEBSITE: Bellhaven Woods of Toledo | 4850 NW Sylvania Ave, Toledo, OH 43623 | care ['Memory Support']
-  CRM: Bellhaven Woods of Toledo (#U3RMM5) | 4850 Northwest Sylvania Avenue, Toledo, OH 43623 | parent VYEEEM | Active | rev 54000 ar 0 | care ['Memory Care']
-  SCORE: 85.0 {'street': 25, 'zip': 15, 'city_state': 10, 'name': 30.0, 'phone': 5} tier=confident
-  DIFF: [["street_address", "4850 Northwest Sylvania Avenue", "4850 NW Sylvania Ave"]]
-  OP PATCH account ...U3RMM5: {"street_address": "4850 NW Sylvania Ave", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven Woods of Toledo'."}
+  DIFF: [["name", "Sunny Acres Retirement Home", "Bellhaven Willow Creek"]]
+  OP PATCH account ...DS8WQZ: {"name": "Bellhaven Willow Creek", "note_append": "[2026-10-30] Synced to website listing for 'Bellhaven Willow Creek'."}
 
 ### [fix] the-arbors-at-bellhaven-dayton  (proposal 606c0388)
   WEBSITE: The Arbors at Bellhaven - Dayton | 2210 Salem Ave, Dayton, OH 45406 | care ['Memory Support']

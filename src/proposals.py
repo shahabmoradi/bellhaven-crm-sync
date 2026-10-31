@@ -9,7 +9,19 @@ Decision order (this order matters and is deliberate):
   1. Duplicates first: if several accounts anchor to one location, pick
      the survivor (under P > Active > has financial history > most
      recently updated > lowest id). Losers get duplicate_of_account =
-     survivor and status Inactive. CHOW is never run on losers.
+     survivor and status Inactive — with ONE exception: a loser under
+     ANOTHER operator (non-null, non-Bellhaven parent) whose revenue
+     AND outstanding AR are both > 0 is that operator's billing record
+     for the same facility, not a duplicate. The CHOW gate applies to
+     it exactly as it would to a survivor: its only change is
+     chow_current_account = survivor; no duplicate flag, no status
+     change. (Verified on this dataset: every cross-operator loser is
+     $0/$0, so the exception changes no outcome here — the gate exists
+     so the code is right by construction.)
+     An account that already carries chow_current_account is a
+     PRESERVED original from an earlier split: it is historical and
+     untouchable. It is excluded from candidacy (its current account
+     is the match), never a duplicate loser, never inactivated.
   2. Parent check on the survivor: wrong parent + revenue > 0 AND
      outstanding AR > 0  ->  CHOW split (create a fresh account under P
      and point the old account's chow_current_account at it; the old
@@ -33,10 +45,23 @@ decided items are never re-proposed.
 import hashlib
 import json
 
-from normalize import normalize_location, account_view, canonical_account, WEB_TO_CRM_CARE
-from match import match_location, DUP_CLUSTER_MIN
+from normalize import (normalize_location, account_view, canonical_account,
+                       split_street, city_key, state_code, zip5, WEB_TO_CRM_CARE)
+from match import match_location, DUP_CLUSTER_MIN, TIER_FLOOR
 
 TODAY = None  # set by the pipeline (kept injectable for tests)
+
+# Fields snapshotted into every proposal's evidence ("before") so the
+# executor's stale check can cover EVERY account a proposal touches —
+# survivor, duplicate losers, CHOW source — and every field class,
+# address and care included, not just name/parent/status.
+SNAP_FIELDS = ("name", "parent_id", "status", "duplicate_of_account",
+               "chow_current_account", "street_address", "city", "state",
+               "zip", "care_offerings")
+
+
+def _snapshot(acct):
+    return {f: acct.get(f) for f in SNAP_FIELDS}
 
 
 def _money(record, key):
@@ -137,25 +162,38 @@ def _pick_survivor(cluster_raw, parent_id):
 def _field_fixes(loc_raw, acct):
     """Diff website values against a canonical CRM record; return
     patch fields (canonical names; the executor translates them to
-    API field names at write time) plus a human-readable diff."""
+    API field names at write time) plus a human-readable diff.
+
+    Address fields are compared on their NORMALIZED form (USPS
+    suffixes and directionals, zip5, state code): "3156 W Prospect
+    Road" vs "3156 W Prospect Rd" is the same address, not a fix.
+    Only substantive differences produce a patch — a different house
+    number or street, a PO Box where the website has a real street,
+    a wrong zip, a missing value."""
     fields, diff = {}, []
     if (acct.get("name") or "").strip().lower() != (loc_raw.get("name") or "").strip().lower():
         fields["name"] = loc_raw["name"]
         diff.append(("name", acct.get("name"), loc_raw["name"]))
 
-    pairs = [
-        ("street_address", loc_raw.get("street_address")),
-        ("city", loc_raw.get("city")),
-        ("state", loc_raw.get("state")),
-        ("zip", loc_raw.get("zip")),
-    ]
-    for key, want in pairs:
-        if want is None:
-            continue
-        have = acct.get(key)
-        if str(have or "").strip().lower() != str(want).strip().lower():
-            fields[key] = want
-            diff.append((key, have, want))
+    if loc_raw.get("street_address") is not None:
+        want_addr = split_street(loc_raw["street_address"])
+        have_addr = split_street(acct.get("street_address") or "")
+        if want_addr != have_addr:
+            fields["street_address"] = loc_raw["street_address"]
+            diff.append(("street_address", acct.get("street_address"),
+                         loc_raw["street_address"]))
+    if loc_raw.get("city") is not None:
+        if city_key(acct.get("city")) != city_key(loc_raw["city"]):
+            fields["city"] = loc_raw["city"]
+            diff.append(("city", acct.get("city"), loc_raw["city"]))
+    if loc_raw.get("state") is not None:
+        if state_code(acct.get("state")) != state_code(loc_raw["state"]):
+            fields["state"] = loc_raw["state"]
+            diff.append(("state", acct.get("state"), loc_raw["state"]))
+    if loc_raw.get("zip") is not None:
+        if zip5(acct.get("zip")) != zip5(loc_raw["zip"]):
+            fields["zip"] = loc_raw["zip"]
+            diff.append(("zip", acct.get("zip"), loc_raw["zip"]))
 
     # Care: the website and CRM use different vocabularies, so the
     # website offerings are mapped to CRM labels before comparing.
@@ -217,9 +255,13 @@ def _website_fields(loc_raw, parent_id):
     }
 
 
-def build_proposals(locations, accounts, today):
+def build_proposals(locations, accounts, today, non_matches=None):
     """locations: raw website dicts. accounts: raw API records (they
     are translated to canonical shape here) or canonical dicts.
+    non_matches: optional set of (subject_key, account_id) pairs a
+    reviewer has CONFIRMED are not the same facility (drawn from
+    rejected ambiguous proposals). A confirmed non-match is excluded
+    from candidacy, so the location falls through to a create.
     Returns (proposals, summary)."""
     global TODAY
     TODAY = today
@@ -228,7 +270,23 @@ def build_proposals(locations, accounts, today):
     views = [account_view(a) for a in accounts]
     proposals = []
     summary = {"parent_id": parent_id, "parent_note": parent_note,
-               "confident_no_change": [], "locations": len(locations)}
+               "confident_no_change": [], "confident_subjects": [],
+               "locations": len(locations)}
+
+    # Preserved originals: an account whose chow_current_account points
+    # at another account that still exists is the historical half of a
+    # completed CHOW split. It must never be proposed against again —
+    # not as a duplicate, not as a fix target, not as an inactivation.
+    # Its current account is the facility's live record.
+    account_ids = {str(a.get("id")) for a in accounts}
+    preserved_ids = {
+        str(a.get("id")) for a in accounts
+        if a.get("chow_current_account")
+        and str(a.get("chow_current_account")) in account_ids
+    }
+    if preserved_ids:
+        summary["preserved_chow_originals"] = sorted(preserved_ids)
+    non_matches = non_matches or set()
 
     # Match every location against ALL accounts (not just Bellhaven
     # children) so wrong-parent and orphan accounts are findable.
@@ -244,6 +302,18 @@ def build_proposals(locations, accounts, today):
     for loc_raw, loc, result in results:
         slug = loc_raw.get("slug") or loc["name_core"]
         cands = [c for c in result["candidates"] if str(c["account"]["id"]) not in claimed]
+        # Preserved CHOW originals are not candidates; their current
+        # account (the split's create) is the match for the location.
+        cands = [c for c in cands if str(c["account"]["id"]) not in preserved_ids]
+        # Confirmed non-matches (reviewer-rejected ambiguous pairs)
+        # are not candidates either.
+        if non_matches:
+            cands = [c for c in cands
+                     if (slug, str(c["account"]["id"])) not in non_matches]
+        if cands and cands[0]["score"] < TIER_FLOOR:
+            # Exclusions removed every plausible candidate; only weak
+            # leftovers remain, which is a no-account location.
+            cands = []
         if not cands:
             tier = "no_account"
             cluster, best = [], None
@@ -253,6 +323,11 @@ def build_proposals(locations, accounts, today):
             tier = result["tier"]
             if tier == "duplicate_cluster" and len(cluster) < 2:
                 tier = "needs_fix" if best["anchored"] else "ambiguous"
+            if tier == "ambiguous" and best["anchored"]:
+                # Reachable after exclusions: the rival that made this
+                # ambiguous is gone, and the best candidate is
+                # address-anchored — a fix, not a coin flip.
+                tier = "needs_fix"
 
         guard = {"house": loc["house"], "street": loc["street"],
                  "zip": loc["zip"], "parent_id": parent_id}
@@ -283,6 +358,7 @@ def build_proposals(locations, accounts, today):
                 "evidence": {
                     "location": loc_raw,
                     "reason": "No address anchor and no clear winner; reviewer must decide.",
+                    "before": {str(top["account"]["id"]): _snapshot(top["account"]["raw"])},
                     "candidates": [
                         {"account_id": c["account"]["id"], "score": c["score"],
                          "breakdown": c["breakdown"], "account": c["account"]["raw"]}
@@ -305,6 +381,34 @@ def build_proposals(locations, accounts, today):
         for loser in cluster_raw:
             if loser.get("id") == survivor.get("id"):
                 continue
+            if loser.get("chow_current_account"):
+                # Defensive: preserved originals are filtered out of
+                # candidacy above, so this should be unreachable — but
+                # a preserved account is never marked a duplicate.
+                notes.append(f"'{loser['name']}' is a preserved CHOW original "
+                             f"(chow_current_account set); left untouched.")
+                continue
+            loser_parent = loser.get("parent_id")
+            cross_operator = (loser_parent is not None
+                              and str(loser_parent) != str(parent_id))
+            l_rev = _money(loser, "lifetime_revenue")
+            l_ar = _money(loser, "outstanding_ar")
+            if cross_operator and l_rev > 0 and l_ar > 0:
+                # Prior-operator twin: the other operator's billing
+                # record for this same facility. The CHOW gate applies
+                # to it exactly as to a survivor — link it to the
+                # current account and change nothing else.
+                ops.append({
+                    "type": "patch", "account_id": loser["id"],
+                    "fields": {"chow_current_account": survivor["id"]},
+                })
+                notes.append(
+                    f"Prior-operator twin: '{loser['name']}' sits under another "
+                    f"operator with revenue ${l_rev:,.0f} AND AR ${l_ar:,.0f} > 0, "
+                    f"so the CHOW rule governs it — linked via chow_current_account "
+                    f"to the survivor only; no duplicate flag, no status change.")
+                kind = "duplicate"
+                continue
             ops.append({
                 "type": "patch", "account_id": loser["id"],
                 "fields": {"duplicate_of_account": survivor["id"], "status": "Inactive",
@@ -317,7 +421,12 @@ def build_proposals(locations, accounts, today):
         surv_parent = survivor.get("parent_id")
         rev, ar = _money(survivor, "lifetime_revenue"), _money(survivor, "outstanding_ar")
         chow = False
-        if str(surv_parent) != str(parent_id):
+        if survivor.get("chow_current_account"):
+            # Defensive (candidacy filtering makes this unreachable in
+            # practice): this account is itself a preserved original.
+            notes.append("Survivor already carries chow_current_account; "
+                         "it is a preserved original — no parent action.")
+        elif str(surv_parent) != str(parent_id):
             if surv_parent is None:
                 ops.append({"type": "patch", "account_id": survivor["id"],
                             "fields": {"parent_id": parent_id,
@@ -355,6 +464,7 @@ def build_proposals(locations, accounts, today):
         if not ops:
             summary["confident_no_change"].append(
                 {"location": loc_raw["name"], "account_id": survivor["id"], "score": best["score"]})
+            summary["confident_subjects"].append(slug)
             continue
 
         proposals.append({
@@ -362,6 +472,7 @@ def build_proposals(locations, accounts, today):
             "evidence": {
                 "location": loc_raw,
                 "account": survivor,
+                "before": {str(a["id"]): _snapshot(a) for a in cluster_raw},
                 "score": best["score"], "breakdown": best["breakdown"],
                 "tier": tier, "notes": notes,
                 "diff": diff,
@@ -389,6 +500,8 @@ def build_proposals(locations, accounts, today):
             continue
         if str(acct.get("id")) in claimed:
             continue
+        if str(acct.get("id")) in preserved_ids:
+            continue  # preserved CHOW original: historical, untouchable
         if (acct.get("status") or "").lower() == "inactive":
             continue
         if acct.get("duplicate_of_account"):
@@ -401,6 +514,7 @@ def build_proposals(locations, accounts, today):
         proposals.append({
             "kind": "inactivate", "subject_key": f"account:{acct['id']}", "ops": ops,
             "evidence": {"account": acct,
+                         "before": {str(acct["id"]): _snapshot(acct)},
                          "reason": ("Bellhaven-named orphan account (no parent) that no "
                                     "website location matches." if is_bellhaven_orphan and not is_child
                                     else "Under the Bellhaven parent but no website location matches it.")},

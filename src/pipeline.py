@@ -51,10 +51,18 @@ def run(fixture=None):
         print(f"fetched {len(accounts)} accounts from the CRM")
 
     today = time.strftime("%Y-%m-%d")
-    proposals, summary = build_proposals(locations, accounts, today)
-    run_id = time.strftime("%Y-%m-%dT%H:%M:%S")
     conn = store.connect()
+    non_matches = store.confirmed_non_matches(conn)
+    if non_matches:
+        print(f"confirmed non-matches in force: {sorted(non_matches)}")
+    proposals, summary = build_proposals(locations, accounts, today,
+                                         non_matches=non_matches)
+    run_id = time.strftime("%Y-%m-%dT%H:%M:%S")
     inserted, skipped, superseded = store.insert_new(conn, proposals, run_id)
+    swept = store.supersede_pending_subjects(conn, summary["confident_subjects"])
+    if swept:
+        print(f"swept {swept} stale pending proposals for locations now "
+              f"classified confident (no change needed)")
     print(f"parent: {summary['parent_id']} ({summary['parent_note']})")
     print(f"locations: {summary['locations']}  proposals: {len(proposals)} "
           f"by kind: {summary['proposal_counts']}")

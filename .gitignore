@@ -4,3 +4,4 @@
 data/*.db
 data/write_log.jsonl
 __pycache__/
+data/proposals.db.bak-*

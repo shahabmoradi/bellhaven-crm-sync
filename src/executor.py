@@ -6,10 +6,14 @@ The nightly pipeline never imports it.
 Safety properties:
 1. Stale check: each account a patch touches is re-fetched first, and
    the fields being changed must still hold their "before" values
-   (taken from the proposal evidence). For a CHOW split the whole
-   gate is re-run at apply time (parent, revenue, AR,
-   chow_current_account): if the branch would flip, the proposal is
-   stale and nothing writes.
+   (taken from the proposal evidence — which snapshots EVERY touched
+   account: survivor, duplicate losers, CHOW source — across name,
+   parent, status, duplicate/CHOW pointers, address and care).
+   The CHOW gate is also re-run at apply time: for a split proposal
+   the whole gate (parent, revenue, AR, chow_current_account), and
+   for ANY direct re-parent, if the account has since gained
+   revenue > 0 AND AR > 0 the branch would flip to a split, so the
+   proposal is stale and nothing writes.
 2. Resumable: the API is not transactional, so after every single op
    the progress (ops completed + any created id) is persisted through
    the save_progress callback. A retry after a partial failure skips
@@ -28,7 +32,24 @@ Safety properties:
 import crm
 from normalize import account_view, canonical_account, WEB_TO_CRM_CARE
 
-BEFORE_FIELDS = ("name", "parent_id", "status", "duplicate_of_account", "chow_current_account")
+BEFORE_FIELDS = ("name", "parent_id", "status", "duplicate_of_account",
+                 "chow_current_account", "street_address", "city", "state",
+                 "zip", "care_offerings")
+
+
+def _field_eq(field, a, b):
+    """Before-value comparison. care_offerings compares as a set of
+    labels (order and representation differ between snapshots);
+    everything else compares as strings, with None and '' equal."""
+    if field == "care_offerings":
+        def labels(v):
+            if v is None:
+                return frozenset()
+            if isinstance(v, str):
+                v = v.replace(";", ",").split(",")
+            return frozenset(str(x).strip().lower() for x in v if str(x).strip())
+        return labels(a) == labels(b)
+    return str(a or "") == str(b or "")
 
 # Canonical field name -> API field name (the FIELD_MAP, write side).
 WRITE_MAP = {
@@ -71,12 +92,18 @@ def _money(record, key):
 
 
 def _before_values(proposal):
-    """account_id -> {field: value at proposal time} from the evidence."""
+    """account_id -> {field: value at proposal time} from the evidence.
+
+    The builder snapshots every account any op touches into
+    evidence["before"]; the single-account evidence["account"] shape
+    is kept as a fallback for older proposals."""
     ev = proposal.get("evidence") or {}
     before = {}
+    for aid, snap in (ev.get("before") or {}).items():
+        before[str(aid)] = {f: snap.get(f) for f in BEFORE_FIELDS}
     acct = ev.get("account")
-    if acct and acct.get("id") is not None:
-        before[acct["id"]] = {f: acct.get(f) for f in BEFORE_FIELDS}
+    if acct and acct.get("id") is not None and str(acct["id"]) not in before:
+        before[str(acct["id"])] = {f: acct.get(f) for f in BEFORE_FIELDS}
     return before
 
 
@@ -92,7 +119,10 @@ def _guard_lookup(op):
         view = account_view(canonical_account(acct))
         if (view["house"] == guard.get("house") and view["street"] == guard.get("street")
                 and view["zip"] == guard.get("zip")):
-            return acct.get("id")
+            # fetch_all_accounts returns RAW API records, whose id
+            # field is account_id — reading "id" here returned None
+            # and silently disabled the guard.
+            return acct.get("account_id") or acct.get("id")
     return None
 
 
@@ -117,16 +147,44 @@ def execute(proposal, dry_run=False, save_progress=None):
         return fresh[aid]
 
     # --- Apply-time re-evaluation -----------------------------------
-    for op in ops:
+    # Ops already completed by an earlier attempt are skipped: their
+    # own writes are exactly why the record no longer matches the
+    # proposal-time "before" values, and re-checking them would make
+    # every resumable proposal un-resumable.
+    for idx, op in enumerate(ops):
+        if idx < done_ops:
+            continue
         if op["type"] == "patch":
-            expected = before.get(op["account_id"], {})
+            expected = before.get(str(op["account_id"]), {})
             record = fresh_account(op["account_id"])
             for field in BEFORE_FIELDS:
                 if field in (op.get("fields") or {}) and field in expected:
-                    if str(record.get(field)) != str(expected[field]):
+                    if not _field_eq(field, record.get(field), expected[field]):
                         raise StaleError(
                             f"account {op['account_id']} field {field}: was "
                             f"{expected[field]!r}, now {record.get(field)!r}")
+    # CHOW gate re-check for DIRECT re-parents (any proposal kind):
+    # a patch that moves an account between two real parents is only
+    # the right branch while revenue or AR is zero. If both have
+    # become positive since the proposal was built, the SOP branch
+    # flips to a split — stop and let the pipeline re-propose.
+    # Orphan assignments (current parent null) are exempt: assigning
+    # a parent is not a move.
+    for idx, op in enumerate(ops):
+        if idx < done_ops:
+            continue
+        if op["type"] == "patch" and "parent_id" in (op.get("fields") or {}):
+            record = fresh_account(op["account_id"])
+            current = record.get("parent_id")
+            target = op["fields"]["parent_id"]
+            if current is not None and str(current) != str(target):
+                if (_money(record, "lifetime_revenue") > 0
+                        and _money(record, "outstanding_ar") > 0):
+                    raise StaleError(
+                        f"account {op['account_id']}: CHOW gate is now met "
+                        f"(revenue and AR both > 0) — a direct re-parent is "
+                        f"no longer the right branch; re-run the pipeline "
+                        f"so this becomes a split")
     if proposal.get("kind") == "chow_split":
         create_op = next((o for o in ops if o["type"] == "create"), None)
         if create_op is not None:

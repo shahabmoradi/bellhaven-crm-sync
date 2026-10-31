@@ -24,12 +24,15 @@ _NAME_TOKENS = {
     "senior", "living", "assisted", "memory", "care", "support",
 }
 
-# USPS-style street suffix / direction abbreviations.
+# USPS-style street suffix / direction abbreviations. Compound
+# directionals included: "Northwest Blvd" and "NW Blvd" are the same
+# street, and both spellings occur in the data.
 _STREET_WORDS = {
     "street": "st", "avenue": "ave", "road": "rd", "boulevard": "blvd",
     "drive": "dr", "lane": "ln", "court": "ct", "place": "pl",
     "circle": "cir", "highway": "hwy", "parkway": "pkwy", "trail": "trl",
     "terrace": "ter", "north": "n", "south": "s", "east": "e", "west": "w",
+    "northwest": "nw", "northeast": "ne", "southwest": "sw", "southeast": "se",
 }
 
 # Unit designators we strip from street addresses ("Ste 200", "#4", ...).
