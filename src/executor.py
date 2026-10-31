@@ -4,11 +4,15 @@ It is called from exactly one place — the review app's approve route.
 The nightly pipeline never imports it.
 
 Safety properties:
-1. Stale check: each account a patch touches is re-fetched first, and
-   the fields being changed must still hold their "before" values
-   (taken from the proposal evidence — which snapshots EVERY touched
-   account: survivor, duplicate losers, CHOW source — across name,
-   parent, status, duplicate/CHOW pointers, address and care).
+1. Stale check: each account a patch touches is re-fetched first,
+   and EVERY field in its proposal-time snapshot must still hold —
+   not only the fields the patch changes. The snapshot covers every
+   touched account (survivor, duplicate losers, CHOW source) across
+   name, parent, status, duplicate/CHOW pointers, address, care, and
+   the money fields. The unchanged fields are the identity evidence:
+   if the address that anchored the match, or the revenue/AR that
+   decided the CHOW branch, has moved, the proposal is stale and
+   nothing writes.
    The CHOW gate is also re-run at apply time: for a split proposal
    the whole gate (parent, revenue, AR, chow_current_account), and
    for ANY direct re-parent, if the account has since gained
@@ -34,13 +38,27 @@ from normalize import account_view, canonical_account, WEB_TO_CRM_CARE
 
 BEFORE_FIELDS = ("name", "parent_id", "status", "duplicate_of_account",
                  "chow_current_account", "street_address", "city", "state",
-                 "zip", "care_offerings")
+                 "zip", "care_offerings", "lifetime_revenue", "outstanding_ar")
+
+_MONEY_FIELDS = ("lifetime_revenue", "outstanding_ar")
+
+
+def _num(value):
+    if value is None:
+        return 0.0
+    if isinstance(value, str):
+        value = value.replace("$", "").replace(",", "").strip()
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 def _field_eq(field, a, b):
     """Before-value comparison. care_offerings compares as a set of
     labels (order and representation differ between snapshots);
-    everything else compares as strings, with None and '' equal."""
+    money compares numerically; everything else compares as strings,
+    with None and '' equal."""
     if field == "care_offerings":
         def labels(v):
             if v is None:
@@ -49,6 +67,8 @@ def _field_eq(field, a, b):
                 v = v.replace(";", ",").split(",")
             return frozenset(str(x).strip().lower() for x in v if str(x).strip())
         return labels(a) == labels(b)
+    if field in _MONEY_FIELDS:
+        return _num(a) == _num(b)
     return str(a or "") == str(b or "")
 
 # Canonical field name -> API field name (the FIELD_MAP, write side).
@@ -80,27 +100,23 @@ class StaleError(Exception):
 
 
 def _money(record, key):
-    value = record.get(key)
-    if value is None:
-        return 0.0
-    if isinstance(value, str):
-        value = value.replace("$", "").replace(",", "").strip()
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return 0.0
+    return _num(record.get(key))
 
 
 def _before_values(proposal):
     """account_id -> {field: value at proposal time} from the evidence.
 
     The builder snapshots every account any op touches into
-    evidence["before"]; the single-account evidence["account"] shape
-    is kept as a fallback for older proposals."""
+    evidence["before"]; the snapshot is used AS STORED — the stale
+    check compares exactly the fields the snapshot carries, so a
+    proposal built before a field was added to the snapshot is
+    checked on the fields it has, and newer proposals on all of
+    them. The single-account evidence["account"] shape is kept as a
+    fallback for older proposals."""
     ev = proposal.get("evidence") or {}
     before = {}
     for aid, snap in (ev.get("before") or {}).items():
-        before[str(aid)] = {f: snap.get(f) for f in BEFORE_FIELDS}
+        before[str(aid)] = dict(snap)
     acct = ev.get("account")
     if acct and acct.get("id") is not None and str(acct["id"]) not in before:
         before[str(acct["id"])] = {f: acct.get(f) for f in BEFORE_FIELDS}
@@ -157,12 +173,18 @@ def execute(proposal, dry_run=False, save_progress=None):
         if op["type"] == "patch":
             expected = before.get(str(op["account_id"]), {})
             record = fresh_account(op["account_id"])
-            for field in BEFORE_FIELDS:
-                if field in (op.get("fields") or {}) and field in expected:
-                    if not _field_eq(field, record.get(field), expected[field]):
-                        raise StaleError(
-                            f"account {op['account_id']} field {field}: was "
-                            f"{expected[field]!r}, now {record.get(field)!r}")
+            # EVERY snapshotted field is compared — not only the ones
+            # this op changes. The unchanged fields are the proposal's
+            # identity evidence (the address that anchored the match,
+            # the money that decided the CHOW branch): if any of them
+            # moved since the proposal was built, the proposal may be
+            # acting on a different record or the wrong branch, and a
+            # human re-run — not a write — is the right outcome.
+            for field, want in expected.items():
+                if not _field_eq(field, record.get(field), want):
+                    raise StaleError(
+                        f"account {op['account_id']} field {field}: was "
+                        f"{want!r}, now {record.get(field)!r}")
     # CHOW gate re-check for DIRECT re-parents (any proposal kind):
     # a patch that moves an account between two real parents is only
     # the right branch while revenue or AR is zero. If both have

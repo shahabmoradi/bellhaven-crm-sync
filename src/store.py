@@ -63,6 +63,15 @@ def insert_new(conn, proposals, run_id):
         if cur.rowcount:
             inserted += 1
         else:
+            # Same target (same stable id) already queued: refresh the
+            # EVIDENCE of the still-pending row, so its "before"
+            # snapshots carry the newest fields. Decided rows are
+            # never touched — their evidence is the historical record.
+            conn.execute(
+                "UPDATE proposals SET evidence = ? "
+                "WHERE id = ? AND status = 'pending'",
+                (json.dumps(p["evidence"]), p["id"]),
+            )
             skipped += 1
     conn.commit()
     return inserted, skipped, superseded
@@ -70,21 +79,28 @@ def insert_new(conn, proposals, run_id):
 
 def confirmed_non_matches(conn):
     """(subject_key, account_id) pairs a reviewer has CONFIRMED are
-    not the same facility: every candidate named by a REJECTED
-    ambiguous proposal. The proposal builder excludes these pairs
-    from candidacy, so on the next run the location falls through
-    to a create proposal instead of re-proposing the same bad match.
-    Reopening a rejected proposal (reopen.py) un-decides it and so
-    also un-confirms the pair."""
+    not the same facility: the sole candidate of a REJECTED
+    single-candidate ambiguous proposal. The proposal builder
+    excludes these pairs from candidacy, so on the next run the
+    location falls through to a create proposal instead of
+    re-proposing the same bad match. Reopening a rejected proposal
+    (reopen.py) un-decides it and so also un-confirms the pair."""
     rows = conn.execute(
         "SELECT subject_key, evidence FROM proposals "
         "WHERE status = 'rejected' AND kind = 'ambiguous'").fetchall()
     pairs = set()
     for r in rows:
         ev = json.loads(r["evidence"]) if r["evidence"] else {}
-        for c in ev.get("candidates", []):
-            if c.get("account_id") is not None:
-                pairs.add((r["subject_key"], str(c["account_id"])))
+        cands = ev.get("candidates", [])
+        # Only a SINGLE-candidate rejection confirms a non-match: the
+        # reviewer was shown one account and said "not this one."
+        # With several candidates, a rejection may mean "insufficient
+        # evidence" rather than "none of these" — excluding them all
+        # could suppress the real match and manufacture a duplicate,
+        # so multi-candidate rejections confirm nothing and the pair
+        # is simply proposed again for a fresh decision.
+        if len(cands) == 1 and cands[0].get("account_id") is not None:
+            pairs.add((r["subject_key"], str(cands[0]["account_id"])))
     return pairs
 
 

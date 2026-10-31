@@ -198,4 +198,60 @@ except executor.StaleError:
     pass
 print("executor stale check OK: address changes are watched")
 
+# --- 8. Independent-build reproductions: full-snapshot stale check ---
+# (a) A duplicate LOSER whose money turns positive after the proposal
+# was built must NOT be stamped duplicate + Inactive: the snapshot's
+# money fields are compared at apply time, the proposal goes stale,
+# and a re-run picks the right branch (CHOW link for a prior
+# operator's record). Zero writes may happen.
+props, _ = build_proposals(locations, dayton_cluster(0), "2026-10-31")
+dup_prop = next(p for p in props if p["subject_key"] == dayton["slug"])
+twin_now = {"id": 61, "name": "Arbors Dayton (OtherCare)", "parent_id": 99,
+            "status": "Active", "street_address": dayton["street_address"],
+            "city": dayton["city"], "state": dayton["state"],
+            "zip": dayton["zip"], "care_offerings": dayton["care_offerings"],
+            "lifetime_revenue": 100, "outstanding_ar": 50}
+survivor_now = {"id": 60, "name": "The Arbors at Bellhaven - Dayton",
+                "parent_id": 1, "status": "Active",
+                "street_address": dayton["street_address"],
+                "city": dayton["city"], "state": dayton["state"],
+                "zip": dayton["zip"],
+                "care_offerings": dayton["care_offerings"],
+                "lifetime_revenue": 0, "outstanding_ar": 0}
+fresh_map = {61: twin_now, 60: survivor_now}
+crm.fetch_account = lambda aid: dict(fresh_map[aid])
+writes = []
+crm.patch_account = lambda aid, fields: writes.append((aid, fields))
+crm.fetch_all_accounts = lambda: []
+try:
+    executor.execute(dup_prop)
+    raise AssertionError("expected StaleError for the money-flipped loser")
+except executor.StaleError:
+    pass
+assert writes == [], writes
+print("loser gate OK: money appearing on a loser blocks the duplicate stamp")
+
+# (b) A parent-only proposal never patches the street — but the street
+# is its identity evidence. If the account's address changed after
+# the proposal was built, approving must stop, not re-parent blind.
+lima_like = {"id": 7, "name": "Bellhaven of Marietta", "parent_id": 99,
+             "status": "Active",
+             "street_address": marietta["street_address"],
+             "city": marietta["city"], "state": marietta["state"],
+             "zip": marietta["zip"],
+             "care_offerings": ["Skilled Nursing"],
+             "lifetime_revenue": 47000, "outstanding_ar": 0}
+props, _ = build_proposals([marietta], [PARENT, OTHER, lima_like], "2026-10-31")
+move_prop = next(p for p in props if p["subject_key"] == marietta["slug"])
+assert all("street_address" not in (op.get("fields") or {}) for op in move_prop["ops"])
+moved = dict(lima_like, street_address="999 Elsewhere St")
+crm.fetch_account = lambda aid: dict(moved)
+try:
+    executor.execute(move_prop)
+    raise AssertionError("expected StaleError for the moved identity anchor")
+except executor.StaleError:
+    pass
+assert writes == [], writes
+print("identity anchor OK: an unchanged-field change still blocks approval")
+
 print("ALL FIX TESTS PASSED")

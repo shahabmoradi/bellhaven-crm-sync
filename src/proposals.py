@@ -57,7 +57,7 @@ TODAY = None  # set by the pipeline (kept injectable for tests)
 # address and care included, not just name/parent/status.
 SNAP_FIELDS = ("name", "parent_id", "status", "duplicate_of_account",
                "chow_current_account", "street_address", "city", "state",
-               "zip", "care_offerings")
+               "zip", "care_offerings", "lifetime_revenue", "outstanding_ar")
 
 
 def _snapshot(acct):
